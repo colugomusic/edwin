@@ -1,13 +1,13 @@
 cmake_minimum_required(VERSION 3.20)
 project(edwin)
-list (APPEND src
+list (APPEND edwin_src
 	include/edwin.hpp
 	include/edwin-object.hpp
 	$<$<BOOL:${APPLE}>:src/edwin-mac.mm>
 	$<$<BOOL:${LINUX}>:src/edwin-lin.cpp>
 	$<$<BOOL:${WIN32}>:src/edwin-win.cpp>
 )
-add_library(edwin STATIC ${src})
+add_library(edwin STATIC ${edwin_src})
 add_library(edwin::edwin ALIAS edwin)
 target_include_directories(edwin PUBLIC
 	${CMAKE_CURRENT_LIST_DIR}/include

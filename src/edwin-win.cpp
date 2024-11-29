@@ -1,6 +1,7 @@
 #define NOMINMAX
 #include "dwmapi.h"
 #include "edwin.hpp"
+#include <memory>
 #include <Windows.h>
 
 namespace edwin {
@@ -73,7 +74,7 @@ auto init_wndclass() -> WNDCLASS {
 	const auto wndclass = WNDCLASS{
 		.lpfnWndProc = wndproc,
 		.hInstance = GetModuleHandle(nullptr),
-		.lpszClassName = "ezwin",
+		.lpszClassName = "edwin",
 	};
 	RegisterClass(&wndclass);
 	return wndclass;
@@ -86,7 +87,7 @@ auto get_wndclass() -> std::string_view {
 }
 
 static
-auto make_style(ezwin::resizable resizable) -> DWORD {
+auto make_style(edwin::resizable resizable) -> DWORD {
 	auto style = WS_OVERLAPPEDWINDOW;
 	if (!resizable.value) {
 		style &= ~WS_SIZEBOX;
@@ -95,7 +96,7 @@ auto make_style(ezwin::resizable resizable) -> DWORD {
 }
 
 static
-auto make_hicon_mask(ezwin::size size) -> HBITMAP {
+auto make_hicon_mask(edwin::size size) -> HBITMAP {
 	const auto width = size.width;
 	const auto height = size.height;
 	const auto mask = CreateBitmap(width, height, 1, 1, nullptr);
@@ -103,7 +104,7 @@ auto make_hicon_mask(ezwin::size size) -> HBITMAP {
 }
 
 static
-auto make_hicon_color(ezwin::icon icon) -> HBITMAP {
+auto make_hicon_color(edwin::icon icon) -> HBITMAP {
 	const auto hdc = GetDC(nullptr);
 	BITMAPINFO bmi = {};
 	bmi.bmiHeader.biSize        = sizeof(bmi.bmiHeader);
@@ -137,7 +138,7 @@ auto make_hicon_color(ezwin::icon icon) -> HBITMAP {
 }
 
 static
-auto make_hicon(ezwin::icon icon) -> HICON {
+auto make_hicon(edwin::icon icon) -> HICON {
 	ICONINFO iconinfo;
 	iconinfo.fIcon    = TRUE;
 	iconinfo.hbmMask  = make_hicon_mask(icon.size);
@@ -188,7 +189,7 @@ auto get_native_handle(const window& wnd) -> native_handle {
 	return native_handle{wnd.hwnd};
 }
 
-auto set(window* wnd, ezwin::icon icon) -> void {
+auto set(window* wnd, edwin::icon icon) -> void {
 	auto old_icon = wnd->hicon;
 	wnd->hicon = make_hicon(icon);
 	if (!wnd->hicon) {
@@ -201,23 +202,23 @@ auto set(window* wnd, ezwin::icon icon) -> void {
 	}
 }
 
-auto set(window* wnd, ezwin::position position) -> void {
+auto set(window* wnd, edwin::position position) -> void {
 	SetWindowPos(wnd->hwnd, nullptr, position.x, position.y, 0, 0, SWP_NOSIZE | SWP_NOZORDER);
 }
 
-auto set(window* wnd, ezwin::position position, ezwin::size size) -> void {
+auto set(window* wnd, edwin::position position, edwin::size size) -> void {
 	set(wnd, position);
 	set(wnd, size);
 }
 
-auto set(window* wnd, ezwin::resizable resizable) -> void {
+auto set(window* wnd, edwin::resizable resizable) -> void {
 	auto style = GetWindowLongPtr(wnd->hwnd, GWL_STYLE);
 	style = resizable.value ? (style | WS_SIZEBOX) : (style & ~WS_SIZEBOX);
 	SetWindowLongPtr(wnd->hwnd, GWL_STYLE, style);
 	SetWindowPos(wnd->hwnd, 0, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_FRAMECHANGED);
 }
 
-auto set(window* wnd, ezwin::size size) -> void {
+auto set(window* wnd, edwin::size size) -> void {
 	RECT rect;
 	RECT frame;
 	RECT border;
@@ -233,11 +234,11 @@ auto set(window* wnd, ezwin::size size) -> void {
 	SetWindowPos(wnd->hwnd, nullptr, 0, 0, size.width, size.height, SWP_NOMOVE | SWP_NOZORDER);
 }
 
-auto set(window* wnd, ezwin::title title) -> void {
+auto set(window* wnd, edwin::title title) -> void {
 	SetWindowText(wnd->hwnd, title.value.data());
 }
 
-auto set(window* wnd, ezwin::visible visible) -> void {
+auto set(window* wnd, edwin::visible visible) -> void {
 	ShowWindow(wnd->hwnd, visible.value ? SW_SHOW : SW_HIDE);
 }
 
