@@ -104,7 +104,7 @@ auto set(window* wnd, edwin::resizable resizable) -> void {
 	XSizeHints hints;
 	hints.flags = PMinSize | PMaxSize;
 	if (resizable.value) {
-		hints.min_width  = MIN_SIZE
+		hints.min_width  = MIN_SIZE;
 		hints.min_height = MIN_SIZE;
 		hints.max_width  = MAX_SIZE;
 		hints.max_height = MAX_SIZE;
