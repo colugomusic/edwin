@@ -26,6 +26,12 @@ struct entry {
 static std::vector<entry> window_list_;
 
 static
+auto get_xdisplay() -> Display* {
+	static auto xdisplay = XOpenDisplay(nullptr);
+	return xdisplay;
+}
+
+static
 auto get_window(Window xwindow) -> window* {
 	for (const auto& entry : window_list_) {
 		if (entry.xwindow == xwindow) {
@@ -37,7 +43,7 @@ auto get_window(Window xwindow) -> window* {
 
 auto create(window_config cfg) -> window* {
 	auto wnd = std::make_unique<window>();
-	const auto xdisplay = XOpenDisplay(nullptr);
+	const auto xdisplay = get_xdisplay();
 	if (!xdisplay) {
 		return nullptr;
 	}
@@ -64,7 +70,7 @@ auto create(window_config cfg) -> window* {
 auto destroy(window* wnd) -> void {
 	if (!wnd) { return; }
 	if (!wnd->xwindow) { return; }
-	const auto xdisplay = XOpenDisplay(nullptr);
+	const auto xdisplay = get_xdisplay();
 	if (!xdisplay) { return; }
 	XDestroyWindow(xdisplay, wnd->xwindow);
 }
@@ -90,17 +96,17 @@ auto set(window* wnd, edwin::icon icon) -> void {
 		value |= (long unsigned int)(icon.pixels[i].b);
 		icon_data[i + 2] = value;
 	}
-	const auto xdisplay = XOpenDisplay(nullptr);
+	const auto xdisplay = get_xdisplay();
 	const auto property = XInternAtom(xdisplay, "_NET_WM_ICON", False);
 	XChangeProperty(xdisplay, wnd->xwindow, property, XA_CARDINAL, 32, PropModeReplace, reinterpret_cast<const unsigned char*>(icon_data.data()), icon_data.size());
 }
 
 auto set(window* wnd, edwin::position position) -> void {
-	XMoveWindow(XOpenDisplay(nullptr), wnd->xwindow, position.x, position.y);
+	XMoveWindow(get_xdisplay(), wnd->xwindow, position.x, position.y);
 }
 
 auto set(window* wnd, edwin::position position, edwin::size size) -> void {
-	XMoveResizeWindow(XOpenDisplay(nullptr), wnd->xwindow, position.x, position.y, size.width, size.height);
+	XMoveResizeWindow(get_xdisplay(), wnd->xwindow, position.x, position.y, size.width, size.height);
 	set(wnd, wnd->resizable);
 }
 
@@ -117,21 +123,21 @@ auto set(window* wnd, edwin::resizable resizable) -> void {
 		hints.min_width = hints.max_width = wnd->size.width;
 		hints.min_height = hints.max_height = wnd->size.height;
 	}
-	XSetWMNormalHints(XOpenDisplay(nullptr), wnd->xwindow, &hints);
+	XSetWMNormalHints(get_xdisplay(), wnd->xwindow, &hints);
 }
 
 auto set(window* wnd, edwin::size size) -> void {
-	XResizeWindow(XOpenDisplay(nullptr), wnd->xwindow, size.width, size.height);
+	XResizeWindow(get_xdisplay(), wnd->xwindow, size.width, size.height);
 	set(wnd, wnd->resizable);
 }
 
 auto set(window* wnd, edwin::title title) -> void {
-	XStoreName(XOpenDisplay(nullptr), wnd->xwindow, title.value.data());
+	XStoreName(get_xdisplay(), wnd->xwindow, title.value.data());
 }
 
 auto set(window* wnd, edwin::visible visible) -> void {
-	if (visible.value) { XMapWindow(XOpenDisplay(nullptr), wnd->xwindow); }
-	else               { XUnmapWindow(XOpenDisplay(nullptr), wnd->xwindow); }
+	if (visible.value) { XMapWindow(get_xdisplay(), wnd->xwindow); }
+	else               { XUnmapWindow(get_xdisplay(), wnd->xwindow); }
 }
 
 auto set(window* wnd, fn::on_window_closed cb) -> void {
@@ -163,7 +169,7 @@ auto on_notify_destroy(const XDestroyWindowEvent& event) -> void {
 
 auto process_messages() -> void {
 	return;
-	const auto xdisplay = XOpenDisplay(nullptr);
+	const auto xdisplay = get_xdisplay();
 	XEvent event;
 	while (XPending(xdisplay)) {
 		XNextEvent(xdisplay, &event);
