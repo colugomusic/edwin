@@ -73,6 +73,10 @@ auto get_native_handle(const window& w) -> native_handle {
 	return native_handle{(void*)(w.xwindow)};
 }
 
+auto get_xwindow(const window& w) -> Window {
+	return w.xwindow;
+}
+
 auto set(window* wnd, edwin::icon icon) -> void {
 	std::vector<unsigned long> icon_data;
 	icon_data.resize(2 + (icon.size.width * icon.size.height));
