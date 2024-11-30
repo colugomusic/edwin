@@ -1,6 +1,7 @@
 #include "edwin.hpp"
 #include <memory>
 #include <vector>
+#include <X11/Xatom.h>
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
 
@@ -78,7 +79,12 @@ auto set(window* wnd, edwin::icon icon) -> void {
 	icon_data[0] = icon.size.width;
 	icon_data[1] = icon.size.height;
 	for (size_t i = 0; i < icon.pixels.size(); ++i) {
-		icon_data[i + 2] = (icon.pixels[i].a << 24) | (icon.pixels[i].r << 16) | (icon.pixels[i].g << 8) | icon.pixels[i].b;
+		long unsigned int value = 0;
+		value |= icon.pixels[i].a; value <<= 8;
+		value |= icon.pixels[i].r; value <<= 8;
+		value |= icon.pixels[i].g; value <<= 8;
+		value |= icon.pixels[i].b;
+		icon_data[i + 2] = value;
 	}
 	const auto xdisplay = XOpenDisplay(nullptr);
 	const auto property = XInternAtom(xdisplay, "_NET_WM_ICON", False);
