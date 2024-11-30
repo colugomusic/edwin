@@ -162,6 +162,7 @@ auto on_notify_destroy(const XDestroyWindowEvent& event) -> void {
 }
 
 auto process_messages() -> void {
+	return;
 	const auto xdisplay = XOpenDisplay(nullptr);
 	XEvent event;
 	while (XPending(xdisplay)) {

@@ -9,11 +9,15 @@ list (APPEND edwin_src
 )
 add_library(edwin STATIC ${edwin_src})
 add_library(edwin::edwin ALIAS edwin)
+if (LINUX)
+	find_package(X11 REQUIRED)
+endif()
 target_include_directories(edwin PUBLIC
 	${CMAKE_CURRENT_LIST_DIR}/include
 )
 target_link_libraries(edwin PUBLIC
 	$<$<BOOL:${WIN32}>:dwmapi>
+	$<$<BOOL:${LINUX}>:X11::X11>
 )
 #if (APPLE)
 #	target_link_libraries(edwin
