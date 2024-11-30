@@ -1,6 +1,8 @@
 #include "edwin.hpp"
+#include <memory>
 #include <vector>
 #include <X11/Xlib.h>
+#include <X11/Xutil.h>
 
 namespace edwin {
 
@@ -43,12 +45,12 @@ auto create(window_config cfg) -> window* {
 	const auto border_width = 0;
 	const auto border = BlackPixel(xdisplay, screen);
 	const auto background = WhitePixel(xdisplay, screen);
-	wnd.xwindow = XCreateSimpleWindow(xdisplay, parent, cfg.position.x, cfg.position.y, cfg.size.width, cfg.size.height, border_width, border, background);
-	if (!wnd.xwindow) {
+	wnd->xwindow = XCreateSimpleWindow(xdisplay, parent, cfg.position.x, cfg.position.y, cfg.size.width, cfg.size.height, border_width, border, background);
+	if (!wnd->xwindow) {
 		return nullptr;
 	}
-	wnd.size = cfg.size;
-	window_list_.push_back({wnd.xwindow, wnd.get()});
+	wnd->size = cfg.size;
+	window_list_.push_back({wnd->xwindow, wnd.get()});
 	set(wnd.get(), cfg.on_closed);
 	set(wnd.get(), cfg.on_resized);
 	set(wnd.get(), cfg.icon);
@@ -67,14 +69,14 @@ auto destroy(window* wnd) -> void {
 }
 
 auto get_native_handle(const window& w) -> native_handle {
-	return native_handle{w.xwindow};
+	return native_handle{(void*)(w.xwindow)};
 }
 
 auto set(window* wnd, edwin::icon icon) -> void {
 	std::vector<unsigned long> icon_data;
-	icon_data.resize(2 + (icon.width * icon.height));
-	icon_data[0] = icon.width;
-	icon_data[1] = icon.height;
+	icon_data.resize(2 + (icon.size.width * icon.size.height));
+	icon_data[0] = icon.size.width;
+	icon_data[1] = icon.size.height;
 	for (size_t i = 0; i < icon.pixels.size(); ++i) {
 		icon_data[i + 2] = (icon.pixels[i].a << 24) | (icon.pixels[i].r << 16) | (icon.pixels[i].g << 8) | icon.pixels[i].b;
 	}
@@ -123,18 +125,18 @@ auto set(window* wnd, edwin::visible visible) -> void {
 }
 
 auto set(window* wnd, fn::on_window_closed cb) -> void {
-	wnd->on_closed(cb);
+	wnd->on_closed = cb;
 }
 
 auto set(window* wnd, fn::on_window_resized cb) -> void {
-	wnd->on_resized(cb);
+	wnd->on_resized = cb;
 }
 
 static
 auto on_notify_configure(const XConfigureEvent& event) -> void {
-	if (const auto wnd = get_window(event.xconfigure.window)) {
+	if (const auto wnd = get_window(event.window)) {
 		if (wnd->on_resized) {
-			wnd->on_resized(size{event.xconfigure.width, event.xconfigure.height});
+			wnd->on_resized(size{event.width, event.height});
 		}
 	}
 }
