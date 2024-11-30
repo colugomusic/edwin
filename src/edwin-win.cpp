@@ -189,6 +189,10 @@ auto get_native_handle(const window& wnd) -> native_handle {
 	return native_handle{wnd.hwnd};
 }
 
+auto get_hwnd(const window& wnd) -> HWND {
+	return wnd.hwnd;
+}
+
 auto set(window* wnd, edwin::icon icon) -> void {
 	auto old_icon = wnd->hicon;
 	wnd->hicon = make_hicon(icon);

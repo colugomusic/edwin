@@ -11,7 +11,7 @@ struct window;
 struct native_handle { void* value = nullptr; };
 struct position      { int x = 0; int y = 0; }; 
 struct resizable     { bool value = false; };
-struct size          { int width  = 0; int height = 0; }; 
+struct size          { int width = 0; int height = 0; }; 
 struct title         { std::string_view value; };
 struct rgba          { std::byte r, g, b, a; };
 struct icon          { edwin::size size; std::span<rgba> pixels; };
@@ -45,15 +45,15 @@ struct window_config {
 [[nodiscard]] auto create(window_config cfg) -> window*;
               auto destroy(window* w) -> void;
 [[nodiscard]] auto get_native_handle(const window& w) -> native_handle;
-              auto set(window* w, edwin::icon icon) -> void;
-              auto set(window* w, edwin::position position) -> void;
-              auto set(window* w, edwin::position position, edwin::size size) -> void;
-              auto set(window* w, edwin::resizable resizable) -> void;
-              auto set(window* w, edwin::size size) -> void;
-              auto set(window* w, edwin::title title) -> void;
-              auto set(window* w, edwin::visible visible) -> void;
-              auto set(window* w, fn::on_window_closed cb) -> void;
-              auto set(window* w, fn::on_window_resized cb) -> void;
+              auto set(window* wnd, edwin::icon icon) -> void;
+              auto set(window* wnd, edwin::position position) -> void;
+              auto set(window* wnd, edwin::position position, edwin::size size) -> void;
+              auto set(window* wnd, edwin::resizable resizable) -> void;
+              auto set(window* wnd, edwin::size size) -> void;
+              auto set(window* wnd, edwin::title title) -> void;
+              auto set(window* wnd, edwin::visible visible) -> void;
+              auto set(window* wnd, fn::on_window_closed cb) -> void;
+              auto set(window* wnd, fn::on_window_resized cb) -> void;
               auto process_messages() -> void;
 
 } // edwin
