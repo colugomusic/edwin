@@ -80,10 +80,10 @@ auto set(window* wnd, edwin::icon icon) -> void {
 	icon_data[1] = icon.size.height;
 	for (size_t i = 0; i < icon.pixels.size(); ++i) {
 		long unsigned int value = 0;
-		value |= icon.pixels[i].a; value <<= 8;
-		value |= icon.pixels[i].r; value <<= 8;
-		value |= icon.pixels[i].g; value <<= 8;
-		value |= icon.pixels[i].b;
+		value |= (long unsigned int)(icon.pixels[i].a); value <<= 8;
+		value |= (long unsigned int)(icon.pixels[i].r); value <<= 8;
+		value |= (long unsigned int)(icon.pixels[i].g); value <<= 8;
+		value |= (long unsigned int)(icon.pixels[i].b);
 		icon_data[i + 2] = value;
 	}
 	const auto xdisplay = XOpenDisplay(nullptr);
