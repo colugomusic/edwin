@@ -49,10 +49,16 @@ auto create(window_config cfg) -> window* {
 	}
 	const auto screen = DefaultScreen(xdisplay);
 	const auto parent = cfg.parent.value ? (Window)(cfg.parent.value) : RootWindow(xdisplay, screen);
-	const auto border_width = 0;
-	const auto border = BlackPixel(xdisplay, screen);
-	const auto background = WhitePixel(xdisplay, screen);
-	wnd->xwindow = XCreateSimpleWindow(xdisplay, parent, cfg.position.x, cfg.position.y, cfg.size.width, cfg.size.height, border_width, border, background);
+	const auto visual = DefaultVisual(xdisplay, screen);
+	const auto depth = DefaultDepth(xdisplay, screen);
+	const auto colormap = XCreateColormap(xdisplay, parent, visual, AllocNone);
+	XSetWindowAttributes attribs = {0};
+	attribs.colormap = colormap;
+	attribs.background_pixel = WhitePixel(xdisplay, screen);
+	attribs.border_pixel     = 0;
+	attribs.event_mask       = StructureNotifyMask | ExposureMask;
+	wnd->xwindow = XCreateWindow(xdisplay, parent, cfg.position.x, cfg.position.y, cfg.size.width, cfg.size.height, border_width, depth,
+		InputOutput, visual, CWBackPixel | CWBorderPixel | CWColormap | CWEventMask, &attribs);
 	if (!wnd->xwindow) {
 		return nullptr;
 	}
@@ -158,7 +164,7 @@ auto on_notify_configure(const XConfigureEvent& event) -> void {
 }
 
 static
-auto on_notify_destroy(const XDestroyWindowEvent& event) -> void {
+auto on_client_message(const XEvent& event) -> void {
 	if (const auto wnd = get_window(event.window)) {
 		if (wnd->on_closed) {
 			wnd->on_closed();
@@ -174,7 +180,7 @@ auto process_messages() -> void {
 		XNextEvent(xdisplay, &event);
 		switch (event.type) {
 			case ConfigureNotify: { on_notify_configure(event.xconfigure); break; }
-			case DestroyNotify:   { on_notify_destroy(event.xdestroywindow); break; }
+			case DestroyNotify:   { on_client_message(event); break; }
 			default:              { break; }
 		}
 	}
