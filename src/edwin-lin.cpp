@@ -52,6 +52,7 @@ auto create(window_config cfg) -> window* {
 	const auto visual = DefaultVisual(xdisplay, screen);
 	const auto depth = DefaultDepth(xdisplay, screen);
 	const auto colormap = XCreateColormap(xdisplay, parent, visual, AllocNone);
+	const auto border_width = 0;
 	XSetWindowAttributes attribs = {0};
 	attribs.colormap = colormap;
 	attribs.background_pixel = WhitePixel(xdisplay, screen);
@@ -165,7 +166,7 @@ auto on_notify_configure(const XConfigureEvent& event) -> void {
 
 static
 auto on_client_message(const XEvent& event) -> void {
-	if (const auto wnd = get_window(event.window)) {
+	if (const auto wnd = get_window(event.xany.window)) {
 		if (wnd->on_closed) {
 			wnd->on_closed();
 		}
