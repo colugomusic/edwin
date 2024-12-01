@@ -4,42 +4,48 @@
 namespace edwin {
 
 @interface EdwinWindow : NSWindow
-	fn::on_window_closed on_window_closed;
-	fn::on_window_resized on_window_resized;
-	fn::on_window_resizing on_window_resizing;
+	window* wnd = nullptr;
 @end
 
 @implementation EdwinWindow
 - (void) windowDidResize: (NSNotification*) notification {
 	NSRect frame = [self frame];
-	if (on_window_resized.fn) {
-		on_window_resized.fn(frame.size.width, frame.size.height);
+	if (wnd->on_window_resized.fn) {
+		wnd->on_window_resized.fn(frame.size.width, frame.size.height);
 	}
 }
 - (void) windowWillResize: (NSWindow*) sender toSize: (NSSize) frameSize {
-	if (on_window_resizing.fn) {
-		on_window_resizing.fn(frameSize.width, frameSize.height);
+	if (wnd->on_window_resizing.fn) {
+		wnd->on_window_resizing.fn(frameSize.width, frameSize.height);
 	}
 }
 - (void) windowWillClose: (NSNotification*) notification {
-	if (on_window_closed.fn) {
-		on_window_closed.fn();
+	if (wnd->on_window_closed.fn) {
+		wnd->on_window_closed.fn();
 	}
 }
 @end
 
 struct window {
-	EdwinWindow* impl = nullptr;
+	EdwinWindow* nswindow = nullptr;
+	NSView* nsview        = nullptr;
+	fn::on_window_closed on_window_closed;
+	fn::on_window_resized on_window_resized;
+	fn::on_window_resizing on_window_resizing;
 };
 
 auto create(window_config cfg) -> window* {
 	auto wnd = std::make_unique<window>();
-	wnd->impl = [[EdwinWindow alloc]
-		initWithContentRect: NSMakeRect(cfg.position.x, cfg.position.y, cfg.size.width, cfg.size.height)
+	const auto rect = NSMakeRect(cfg.position.x, cfg.position.y, cfg.size.width, cfg.size.height);
+	wnd->nswindow = [[EdwinWindow alloc]
+		initWithContentRect: rect
 		styleMask:           NSWindowStyleMaskTitled | NSWindowStyleMaskClosable | NSWindowStyleMaskResizable
 		backing:             NSBackingStoreBuffered
 		defer:               NO
 	];
+	wnd->nswindow->wnd = wnd.get();
+	wnd->nsview        = [[NSView alloc] initWithFrame: rect];
+	[wnd->nswindow setContentView: wnd->nsview];
 	set(wnd.get(), cfg.title);
 	set(wnd.get(), cfg.resizable);
 	set(wnd.get(), cfg.visible);
@@ -50,13 +56,14 @@ auto create(window_config cfg) -> window* {
 }
 
 auto destroy(window* wnd) -> void {
-	if (!wnd) { return; }
-	if (wnd->impl) { [wnd->impl close]; })
+	if (!wnd)          { return; }
+	if (wnd->nswindow) { [wnd->nswindow close]; })
+	if (wnd->nsview)   { [wnd->nsview release]; })
 	delete wnd;
 }
 
 auto get_native_handle(const window& wnd) -> native_handle {
-	return [wnd.impl contentView];
+	return {wnd.nsview};
 }
 
 auto set(window* wnd, edwin::icon icon) -> void {
@@ -64,59 +71,59 @@ auto set(window* wnd, edwin::icon icon) -> void {
 }
 
 auto set(window* wnd, edwin::position position) -> void {
-	auto frame = [wnd->impl frame];
+	auto frame = [wnd->nswindow frame];
 	frame.origin.x = position.x;
 	frame.origin.y = position.y;
-	[wnd->impl setFrame: frame display: YES];
+	[wnd->nswindow setFrame: frame display: YES];
 }
 
 auto set(window* wnd, edwin::position position, edwin::size size) -> void {
-	auto frame = [wnd->impl frame];
+	auto frame = [wnd->nswindow frame];
 	frame.origin.x = position.x;
 	frame.origin.y = position.y;
 	frame.size.width = size.width;
 	frame.size.height = size.height;
-	[wnd->impl setFrame: frame display: YES];
+	[wnd->nswindow setFrame: frame display: YES];
 }
 
 auto set(window* wnd, edwin::resizable resizable) -> void {
-	const auto mask = [wnd->impl styleMask];
+	const auto mask = [wnd->nswindow styleMask];
 	if (resizable.value) {
-		[wnd->impl setStyleMask: mask | NSWindowStyleMaskResizable];
+		[wnd->nswindow setStyleMask: mask | NSWindowStyleMaskResizable];
 	} else {
-		[wnd->impl setStyleMask: mask & ~NSWindowStyleMaskResizable];
+		[wnd->nswindow setStyleMask: mask & ~NSWindowStyleMaskResizable];
 	}
 }
 
 auto set(window* wnd, edwin::size size) -> void {
-	auto frame = [wnd->impl frame];
+	auto frame = [wnd->nswindow frame];
 	frame.size.width = size.width;
 	frame.size.height = size.height;
-	[wnd->impl setFrame: frame display: YES];
+	[wnd->nswindow setFrame: frame display: YES];
 }
 
 auto set(window* wnd, edwin::title title) -> void {
-	[wnd->impl setTitle: [NSString stringWithUTF8String: title.value.data()]];
+	[wnd->nswindow setTitle: [NSString stringWithUTF8String: title.value.data()]];
 }
 
 auto set(window* wnd, edwin::visible visible) -> void {
 	if (visible.value) {
-		[wnd->impl makeKeyAndOrderFront: nil];
+		[wnd->nswindow makeKeyAndOrderFront: nil];
 	} else {
-		[wnd->impl orderOut: nil];
+		[wnd->nswindow orderOut: nil];
 	}
 }
 
 auto set(window* wnd, fn::on_window_closed cb) -> void {
-	wnd->impl->on_window_closed = cb;
+	wnd->nswindow->on_window_closed = cb;
 }
 
 auto set(window* wnd, fn::on_window_resized cb) -> void {
-	wnd->impl->on_window_resized = cb;
+	wnd->nswindow->on_window_resized = cb;
 }
 
 auto set(window* wnd, fn::on_window_resizing cb) -> void {
-	wnd->impl->on_window_resizing = cb;
+	wnd->nswindow->on_window_resizing = cb;
 }
 
 auto process_messages() -> void {
