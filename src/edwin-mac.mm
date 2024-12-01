@@ -44,8 +44,18 @@ namespace edwin {
 
 static fn::frame app_frame_;
 static bool app_schedule_stop_ = false;
+static NSApplication* app_ = nullptr;
+
+static
+auto get_app() -> NSApplication* {
+	if (!app_) {
+		app_ = [NSApplication sharedApplication];
+	}
+	return app_;
+}
 
 auto create(window_config cfg) -> window* {
+	get_app();
 	auto wnd = std::make_unique<window>();
 	const auto rect = NSMakeRect(cfg.position.x, cfg.position.y, cfg.size.width, cfg.size.height);
 	wnd->nswindow = [[EdwinWindow alloc]
@@ -142,22 +152,16 @@ auto set(window* wnd, fn::on_window_resizing cb) -> void {
 }
 
 auto process_messages() -> void {
-	const auto run_loop = [NSRunLoop currentRunLoop];
-	[run_loop
-		runMode:    NSDefaultRunLoopMode
-		beforeDate: [NSDate distantFuture]
-	];
+	const auto app = get_app();
+	[app updateWindows];
 }
 
 auto app_beg(edwin::fn::frame frame, edwin::frame_interval interval) -> void {
+	const auto app = get_app();
 	app_frame_ = frame;
-	const auto run_loop = [NSRunLoop currentRunLoop];
 	auto next_frame = std::chrono::steady_clock::now();
 	for (;;) {
-		[run_loop
-			runMode:    NSDefaultRunLoopMode
-			beforeDate: [NSDate distantFuture]
-		];
+		[app updateWindows];
 		if (frame.fn) {
 			frame.fn();
 		}
