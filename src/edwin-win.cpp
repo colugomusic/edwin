@@ -141,7 +141,7 @@ auto get_wndclass() -> std::string_view {
 }
 
 static
-auto make_style(edwin::resizable resizable, edwin::native_handle parent) -> DWORD {
+auto make_style(edwin::resizable resizable) -> DWORD {
 	auto style = WS_OVERLAPPEDWINDOW;
 	if (!resizable.value) {
 		style &= ~WS_SIZEBOX;
@@ -214,7 +214,7 @@ auto create(window_config cfg) -> window* {
 	const auto exstyle = DWORD{0};
 	const auto wndclass = get_wndclass();
 	const auto title = cfg.title.value;
-	const auto style = make_style(cfg.resizable, cfg.parent);
+	const auto style = make_style(cfg.resizable);
 	const auto x = std::max(0, cfg.position.x);
 	const auto y = std::max(0, cfg.position.y);
 	const auto w = std::max(MIN_SIZE, cfg.size.width);
