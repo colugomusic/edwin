@@ -112,6 +112,7 @@ auto set(window* wnd, edwin::position position) -> void {
 }
 
 auto set(window* wnd, edwin::position position, edwin::size size) -> void {
+	wnd->size = size;
 	XMoveResizeWindow(get_xdisplay(), wnd->xwindow, position.x, position.y, size.width, size.height);
 	set(wnd, wnd->resizable);
 }
@@ -133,6 +134,7 @@ auto set(window* wnd, edwin::resizable resizable) -> void {
 }
 
 auto set(window* wnd, edwin::size size) -> void {
+	wnd->size = size;
 	XResizeWindow(get_xdisplay(), wnd->xwindow, size.width, size.height);
 	set(wnd, wnd->resizable);
 }
