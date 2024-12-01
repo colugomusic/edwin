@@ -117,13 +117,18 @@ auto set(window* wnd, edwin::position position, edwin::size size) -> void {
 }
 
 auto set(window* wnd, edwin::resizable resizable) -> void {
-	XSizeHints hints;
+	XSizeHints hints = {0};
 	hints.flags = PMinSize | PMaxSize;
 	if (resizable.value) {
 		hints.min_width  = MIN_SIZE;
 		hints.min_height = MIN_SIZE;
 		hints.max_width  = MAX_SIZE;
 		hints.max_height = MAX_SIZE;
+		hints.flags |= PResizeInc | PBaseSize;
+		hints.base_width = 1;
+		hints.base_height = 1;
+		hints.resize_inc_width = 10;
+		hints.resize_inc_height = 10;
 	}
 	else {
 		hints.min_width = hints.max_width = wnd->size.width;
