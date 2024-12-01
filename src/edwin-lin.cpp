@@ -56,15 +56,8 @@ auto create(window_config cfg) -> window* {
 	const auto parent = cfg.parent.value ? (Window)(cfg.parent.value) : RootWindow(xdisplay, screen);
 	const auto visual = DefaultVisual(xdisplay, screen);
 	const auto depth = DefaultDepth(xdisplay, screen);
-	const auto colormap = XCreateColormap(xdisplay, parent, visual, AllocNone);
 	const auto border_width = 0;
-	XSetWindowAttributes attribs = {0};
-	attribs.colormap = colormap;
-	attribs.background_pixel = WhitePixel(xdisplay, screen);
-	attribs.border_pixel     = 0;
-	attribs.event_mask       = StructureNotifyMask | ExposureMask;
-	wnd->xwindow = XCreateWindow(xdisplay, parent, cfg.position.x, cfg.position.y, cfg.size.width, cfg.size.height, border_width, depth,
-		InputOutput, visual, CWBackPixel | CWBorderPixel | CWColormap | CWEventMask, &attribs);
+	wnd->xwindow = XCreateSimpleWindow(xdisplay, parent, cfg.position.x, cfg.position.y, cfg.size.width, cfg.size.height, border_width, BlackPixel(xdisplay, screen), WhitePixel(xdisplay, screen));
 	if (!wnd->xwindow) {
 		return nullptr;
 	}
