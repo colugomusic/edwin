@@ -70,7 +70,7 @@ struct window_config {
 
               // Instead of calling process_messages() in your own loop, you can use app_beg()
               // and app_end() to have edwin process the message loop for you. Unfortunately
-              // this is necessary if you want resizing to work without freezing your
+              // it's necessary to use this if you want resizing to work without freezing your
               // application on Windows.
               auto app_beg(edwin::fn::frame frame, edwin::frame_interval interval) -> void;
               auto app_end() -> void;
