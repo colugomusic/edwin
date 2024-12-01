@@ -79,6 +79,7 @@ auto destroy(window* wnd) -> void {
 	const auto xdisplay = get_xdisplay();
 	if (!xdisplay) { return; }
 	XDestroyWindow(xdisplay, wnd->xwindow);
+	delete wnd;
 }
 
 auto get_native_handle(const window& w) -> native_handle {
@@ -90,6 +91,8 @@ auto get_xwindow(const window& w) -> Window {
 }
 
 auto set(window* wnd, edwin::icon icon) -> void {
+	// I don't know if this code works because my window
+	// manager doesn't actually have window icons.
 	std::vector<unsigned long> icon_data;
 	icon_data.resize(2 + (icon.size.width * icon.size.height));
 	icon_data[0] = icon.size.width;

@@ -50,11 +50,21 @@ struct window_config {
 };
 
 [[nodiscard]] auto create(window_config cfg) -> window*;
-              auto destroy(window* w) -> void;
+              auto destroy(window* wnd) -> void;
 
-[[nodiscard]] auto get_native_handle(const window& w) -> native_handle;
+			  // Return the native handle for the window.
+              // Windows: HWND
+              // Linux: Window
+              // macOS: NSView
+[[nodiscard]] auto get_native_handle(const window& wnd) -> native_handle;
 
+              // Set the icon for the window.
+              // Windows: It will show up in the title bar.
+              // Linux: I don't know if it works because my window manager doesn't actually have window icons.
+              // macOS: This is a no-op because having individual window icons isn't really a thing AFAIK.
               auto set(window* wnd, edwin::icon icon) -> void;
+              
+              // Other properties.
               auto set(window* wnd, edwin::position position) -> void;
               auto set(window* wnd, edwin::position position, edwin::size size) -> void;
               auto set(window* wnd, edwin::resizable resizable) -> void;
@@ -66,12 +76,14 @@ struct window_config {
               auto set(window* wnd, fn::on_window_resizing cb) -> void;
 
               // Call this in a loop.
+              // This is a no-op on macOS.
               auto process_messages() -> void;
 
               // Instead of calling process_messages() in your own loop, you can use app_beg()
               // and app_end() to have edwin process the message loop for you. Unfortunately
-              // it's necessary to use this if you want resizing to work without freezing your
-              // application on Windows.
+              // it's necessary to do things this way if you want resizing to work without
+              // freezing your application on Windows.
+              // This is a no-op on macOS.
               auto app_beg(edwin::fn::frame frame, edwin::frame_interval interval) -> void;
               auto app_end() -> void;
 
