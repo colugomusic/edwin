@@ -115,10 +115,10 @@ auto CALLBACK wndproc(HWND hwnd, UINT msg, WPARAM w, LPARAM l) -> LRESULT {
 		case WM_CLOSE:         { return wm_close(hwnd, msg, w, l); }
 		case WM_CREATE:        { return wm_create(hwnd, msg, w, l); }
 		case WM_DESTROY:       { return wm_destroy(hwnd, msg, w, l); }
-		case WM_SIZE:          { return wm_size(hwnd, msg, w, l); }
-		case WM_SIZING:        { return wm_sizing(hwnd, msg, w, l); }
 		case WM_ENTERSIZEMOVE: { return wm_enter_size_move(hwnd, msg, w, l); }
 		case WM_EXITSIZEMOVE:  { return wm_exit_size_move(hwnd, msg, w, l); }
+		case WM_SIZE:          { return wm_size(hwnd, msg, w, l); }
+		case WM_SIZING:        { return wm_sizing(hwnd, msg, w, l); }
 	}
 	return DefWindowProc(hwnd, msg, w, l);
 }
@@ -141,10 +141,11 @@ auto get_wndclass() -> std::string_view {
 }
 
 static
-auto make_style(edwin::resizable resizable) -> DWORD {
+auto make_style(edwin::resizable resizable, edwin::native_handle parent) -> DWORD {
 	auto style = WS_OVERLAPPEDWINDOW;
 	if (!resizable.value) {
 		style &= ~WS_SIZEBOX;
+		style &= ~WS_MAXIMIZEBOX;
 	}
 	return style;
 }
@@ -213,7 +214,7 @@ auto create(window_config cfg) -> window* {
 	const auto exstyle = DWORD{0};
 	const auto wndclass = get_wndclass();
 	const auto title = cfg.title.value;
-	const auto style = make_style(cfg.resizable);
+	const auto style = make_style(cfg.resizable, cfg.parent);
 	const auto x = std::max(0, cfg.position.x);
 	const auto y = std::max(0, cfg.position.y);
 	const auto w = std::max(MIN_SIZE, cfg.size.width);
