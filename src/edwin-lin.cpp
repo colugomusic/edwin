@@ -127,8 +127,6 @@ auto set(window* wnd, edwin::resizable resizable) -> void {
 		hints.flags |= PResizeInc | PBaseSize;
 		hints.base_width = 1;
 		hints.base_height = 1;
-		hints.resize_inc_width = 10;
-		hints.resize_inc_height = 10;
 	}
 	else {
 		hints.min_width = hints.max_width = wnd->size.width;
