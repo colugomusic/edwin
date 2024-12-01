@@ -13,7 +13,19 @@ struct window {
 	HICON hicon = nullptr;
 	fn::on_window_closed on_closed;
 	fn::on_window_resized on_resized;
+	fn::on_window_resizing on_resizing;
 };
+
+static UINT_PTR app_timer_ = 0;
+static fn::frame app_frame_;
+static bool app_schedule_stop_ = false;
+
+static
+auto app_timer_proc(HWND hwnd, UINT msg, UINT_PTR id, DWORD time) -> void {
+	if (app_frame_.fn) {
+		app_frame_.fn();
+	}
+}
 
 static
 auto get_window(HWND hwnd) -> window* {
@@ -23,8 +35,8 @@ auto get_window(HWND hwnd) -> window* {
 static
 auto wm_close(HWND hwnd, UINT msg, WPARAM w, LPARAM l) -> LRESULT {
 	if (const auto wnd = get_window(hwnd)) {
-		if (wnd->on_closed) {
-			wnd->on_closed();
+		if (wnd->on_closed.fn) {
+			wnd->on_closed.fn();
 		}
 		destroy(wnd);
 	}
@@ -49,10 +61,23 @@ auto wm_destroy(HWND hwnd, UINT msg, WPARAM w, LPARAM l) -> LRESULT {
 static
 auto wm_size(HWND hwnd, UINT msg, WPARAM w, LPARAM l) -> LRESULT {
 	if (const auto wnd = get_window(hwnd)) {
-		if (wnd->on_resized) {
+		if (wnd->on_resized.fn) {
+			const auto type   = w;
 			const auto width  = LOWORD(l);
 			const auto height = HIWORD(l);
-			wnd->on_resized(size{width, height});
+			wnd->on_resized.fn(size{width, height});
+		}
+	}
+	return 0;
+}
+
+static
+auto wm_sizing(HWND hwnd, UINT msg, WPARAM w, LPARAM l) -> LRESULT {
+	if (const auto wnd = get_window(hwnd)) {
+		if (wnd->on_resizing.fn) {
+			const auto edge   = w;
+			const auto rect   = (RECT*)(l);
+			wnd->on_resizing.fn(size{rect->right - rect->left, rect->bottom - rect->top});
 		}
 	}
 	return 0;
@@ -65,6 +90,7 @@ auto CALLBACK wndproc(HWND hwnd, UINT msg, WPARAM w, LPARAM l) -> LRESULT {
 		case WM_CREATE:  { return wm_create(hwnd, msg, w, l); }
 		case WM_DESTROY: { return wm_destroy(hwnd, msg, w, l); }
 		case WM_SIZE:    { return wm_size(hwnd, msg, w, l); }
+		case WM_SIZING:  { return wm_sizing(hwnd, msg, w, l); }
 	}
 	return DefWindowProc(hwnd, msg, w, l);
 }
@@ -174,6 +200,7 @@ auto create(window_config cfg) -> window* {
 	}
 	set(wnd.get(), cfg.on_closed);
 	set(wnd.get(), cfg.on_resized);
+	set(wnd.get(), cfg.on_resizing);
 	set(wnd.get(), cfg.icon);
 	set(wnd.get(), cfg.visible);
 	return wnd.release();
@@ -223,18 +250,13 @@ auto set(window* wnd, edwin::resizable resizable) -> void {
 }
 
 auto set(window* wnd, edwin::size size) -> void {
-	RECT rect;
-	RECT frame;
-	RECT border;
-	GetWindowRect(wnd->hwnd, &rect);
-	DwmGetWindowAttribute(wnd->hwnd, DWMWA_EXTENDED_FRAME_BOUNDS, &frame, sizeof(frame));
-	border.left   = frame.left - rect.left;
-	border.top    = frame.top - rect.top;
-	border.right  = frame.right - rect.right;
-	border.bottom = frame.bottom - rect.bottom;
-	const auto titlebar_height = GetSystemMetrics(SM_CYCAPTION) + GetSystemMetrics(SM_CYFRAME) + GetSystemMetrics(SM_CXPADDEDBORDER);
-	size.width  = size.width + border.left + border.right;
-	size.height = size.height + border.top + border.bottom + titlebar_height;
+	RECT rect = {0, 0, size.width, size.height};
+	const auto style    = GetWindowLong(wnd->hwnd, GWL_STYLE);
+	const auto exstyle  = GetWindowLong(wnd->hwnd, GWL_EXSTYLE);
+	const auto has_menu = GetMenu(wnd->hwnd) != nullptr;
+	AdjustWindowRectEx(&rect, style, has_menu, exstyle);
+	size.width = rect.right - rect.left;
+	size.height = rect.bottom - rect.top;
 	SetWindowPos(wnd->hwnd, nullptr, 0, 0, size.width, size.height, SWP_NOMOVE | SWP_NOZORDER);
 }
 
@@ -254,12 +276,33 @@ auto set(window* wnd, fn::on_window_resized cb) -> void {
 	wnd->on_resized = cb;
 }
 
+auto set(window* wnd, fn::on_window_resizing cb) -> void {
+	wnd->on_resizing = cb;
+}
+
 auto process_messages() -> void {
 	auto msg = MSG{};
 	while (PeekMessage(&msg, 0, 0, 0, PM_REMOVE)) {
 		TranslateMessage(&msg);
 		DispatchMessage(&msg);
 	}
+}
+
+auto app_beg(edwin::fn::frame frame, edwin::frame_interval interval) -> void {
+	app_frame_ = frame;
+	app_timer_ = SetTimer(nullptr, 1, interval.value.count(), app_timer_proc);
+	auto msg = MSG{};
+	while (GetMessage(&msg, 0, 0, 0)) {
+		TranslateMessage(&msg);
+		DispatchMessage(&msg);
+		if (app_schedule_stop_) {
+			return;
+		}
+	}
+}
+
+auto app_end() -> void {
+	app_schedule_stop_ = true;
 }
 
 } // edwin
