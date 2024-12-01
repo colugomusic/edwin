@@ -20,11 +20,10 @@ target_link_libraries(edwin PUBLIC
 	$<$<BOOL:${LINUX}>:X11::X11>
 )
 #if (APPLE)
-#	target_link_libraries(edwin
-#		"-framework Foundation"
-#		"-framework Cocoa"
-#		"-framework UniformTypeIdentifiers"
-#	)
+	target_link_libraries(edwin PUBLIC
+        #"-framework Foundation"
+		"-framework Cocoa"
+	)
 #endif()
 set_target_properties(edwin PROPERTIES
 	CXX_STANDARD 20

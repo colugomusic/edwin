@@ -1,38 +1,46 @@
-#include "edwin.h"
+#include "edwin.hpp"
 #include <Cocoa/Cocoa.h>
+
+@interface EdwinWindow : NSWindow
+@property (nonatomic, readwrite) edwin::window* wnd;
+@end
 
 namespace edwin {
 
-@interface EdwinWindow : NSWindow
-	window* wnd = nullptr;
-@end
+struct window {
+    EdwinWindow* nswindow = nullptr;
+    NSView* nsview        = nullptr;
+    fn::on_window_closed on_window_closed;
+    fn::on_window_resized on_window_resized;
+    fn::on_window_resizing on_window_resizing;
+};
+
+} // edwin
 
 @implementation EdwinWindow
 - (void) windowDidResize: (NSNotification*) notification {
 	NSRect frame = [self frame];
-	if (wnd->on_window_resized.fn) {
-		wnd->on_window_resized.fn(frame.size.width, frame.size.height);
+	if (self.wnd->on_window_resized.fn) {
+        const auto w = (int)(frame.size.width);
+        const auto h = (int)(frame.size.height);
+        self.wnd->on_window_resized.fn({w, h});
 	}
 }
 - (void) windowWillResize: (NSWindow*) sender toSize: (NSSize) frameSize {
-	if (wnd->on_window_resizing.fn) {
-		wnd->on_window_resizing.fn(frameSize.width, frameSize.height);
+	if (self.wnd->on_window_resizing.fn) {
+        const auto w = (int)(frameSize.width);
+        const auto h = (int)(frameSize.height);
+        self.wnd->on_window_resizing.fn({w, h});
 	}
 }
 - (void) windowWillClose: (NSNotification*) notification {
-	if (wnd->on_window_closed.fn) {
-		wnd->on_window_closed.fn();
+	if (self.wnd->on_window_closed.fn) {
+		self.wnd->on_window_closed.fn();
 	}
 }
 @end
 
-struct window {
-	EdwinWindow* nswindow = nullptr;
-	NSView* nsview        = nullptr;
-	fn::on_window_closed on_window_closed;
-	fn::on_window_resized on_window_resized;
-	fn::on_window_resizing on_window_resizing;
-};
+namespace edwin {
 
 static fn::frame app_frame_;
 static bool app_schedule_stop_ = false;
@@ -46,27 +54,31 @@ auto create(window_config cfg) -> window* {
 		backing:             NSBackingStoreBuffered
 		defer:               NO
 	];
-	wnd->nswindow->wnd = wnd.get();
-	wnd->nsview        = [[NSView alloc] initWithFrame: rect];
+	wnd->nswindow.wnd = wnd.get();
+	wnd->nsview       = [[NSView alloc] initWithFrame: rect];
 	[wnd->nswindow setContentView: wnd->nsview];
 	set(wnd.get(), cfg.title);
 	set(wnd.get(), cfg.resizable);
 	set(wnd.get(), cfg.visible);
-	set(wnd.get(), cfg.on_window_closed);
-	set(wnd.get(), cfg.on_window_resized);
-	set(wnd.get(), cfg.on_window_resizing);
+	set(wnd.get(), cfg.on_closed);
+	set(wnd.get(), cfg.on_resized);
+	set(wnd.get(), cfg.on_resizing);
 	return wnd.release();
 }
 
 auto destroy(window* wnd) -> void {
 	if (!wnd)          { return; }
-	if (wnd->nswindow) { [wnd->nswindow close]; })
-	if (wnd->nsview)   { [wnd->nsview release]; })
+	if (wnd->nswindow) { [wnd->nswindow close]; }
+	if (wnd->nsview)   { [wnd->nsview release]; }
 	delete wnd;
 }
 
 auto get_native_handle(const window& wnd) -> native_handle {
 	return {wnd.nsview};
+}
+
+auto get_nsview(const window& wnd) -> NSView* {
+    return wnd.nsview;
 }
 
 auto set(window* wnd, edwin::icon icon) -> void {
@@ -118,15 +130,15 @@ auto set(window* wnd, edwin::visible visible) -> void {
 }
 
 auto set(window* wnd, fn::on_window_closed cb) -> void {
-	wnd->nswindow->on_window_closed = cb;
+	wnd->on_window_closed = cb;
 }
 
 auto set(window* wnd, fn::on_window_resized cb) -> void {
-	wnd->nswindow->on_window_resized = cb;
+	wnd->on_window_resized = cb;
 }
 
 auto set(window* wnd, fn::on_window_resizing cb) -> void {
-	wnd->nswindow->on_window_resizing = cb;
+	wnd->on_window_resizing = cb;
 }
 
 auto process_messages() -> void {
