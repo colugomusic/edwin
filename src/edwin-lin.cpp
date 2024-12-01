@@ -1,4 +1,5 @@
 #include "edwin.hpp"
+#include <chrono>
 #include <memory>
 #include <vector>
 #include <X11/Xatom.h>
@@ -16,6 +17,7 @@ struct window {
 	edwin::size size;
 	fn::on_window_closed on_closed;
 	fn::on_window_resized on_resized;
+	fn::on_window_resizing on_resizing;
 };
 
 struct entry {
@@ -24,6 +26,8 @@ struct entry {
 };
 
 static std::vector<entry> window_list_;
+static fn::frame app_frame_;
+static bool app_schedule_stop_ = false;
 
 static
 auto get_xdisplay() -> Display* {
@@ -67,6 +71,7 @@ auto create(window_config cfg) -> window* {
 	window_list_.push_back({wnd->xwindow, wnd.get()});
 	set(wnd.get(), cfg.on_closed);
 	set(wnd.get(), cfg.on_resized);
+	set(wnd.get(), cfg.on_resizing);
 	set(wnd.get(), cfg.icon);
 	set(wnd.get(), cfg.resizable);
 	set(wnd.get(), cfg.title);
@@ -155,11 +160,15 @@ auto set(window* wnd, fn::on_window_resized cb) -> void {
 	wnd->on_resized = cb;
 }
 
+auto set(window* wnd, fn::on_window_resizing cb) -> void {
+	wnd->on_resizing = cb;
+}
+
 static
 auto on_notify_configure(const XConfigureEvent& event) -> void {
 	if (const auto wnd = get_window(event.window)) {
-		if (wnd->on_resized) {
-			wnd->on_resized(size{event.width, event.height});
+		if (wnd->on_resizing.fn) {
+			wnd->on_resizing.fn(size{event.width, event.height});
 		}
 	}
 }
@@ -185,6 +194,23 @@ auto process_messages() -> void {
 			default:              { break; }
 		}
 	}
+}
+
+auto app_beg(edwin::fn::frame frame, edwin::frame_interval interval) -> void {
+	app_frame_ = frame;
+	auto next_frame = std::chrono::steady_clock::now();
+	for (;;) {
+		process_messages();
+		if (app_schedule_stop_) {
+			return;
+		}
+		next_frame += interval.value;
+		std::this_thread::sleep_until(next_frame);
+	}
+}
+
+auto app_end() -> void {
+	app_schedule_stop_ = true;
 }
 
 } // edwin
