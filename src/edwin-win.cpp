@@ -11,6 +11,7 @@ static constexpr auto MIN_SIZE = 10;
 struct window {
 	HWND hwnd   = nullptr;
 	HICON hicon = nullptr;
+	bool user_resizing = false;
 	fn::on_window_closed on_closed;
 	fn::on_window_resized on_resized;
 	fn::on_window_resizing on_resizing;
@@ -61,7 +62,7 @@ auto wm_destroy(HWND hwnd, UINT msg, WPARAM w, LPARAM l) -> LRESULT {
 static
 auto wm_size(HWND hwnd, UINT msg, WPARAM w, LPARAM l) -> LRESULT {
 	if (const auto wnd = get_window(hwnd)) {
-		if (wnd->on_resized.fn) {
+		if (wnd->on_resized.fn && !wnd->user_resizing) {
 			const auto type   = w;
 			const auto width  = LOWORD(l);
 			const auto height = HIWORD(l);
@@ -75,9 +76,34 @@ static
 auto wm_sizing(HWND hwnd, UINT msg, WPARAM w, LPARAM l) -> LRESULT {
 	if (const auto wnd = get_window(hwnd)) {
 		if (wnd->on_resizing.fn) {
-			const auto edge   = w;
-			const auto rect   = (RECT*)(l);
-			wnd->on_resizing.fn(size{rect->right - rect->left, rect->bottom - rect->top});
+			RECT rect;
+			GetClientRect(hwnd, &rect);
+			const auto width  = rect.right - rect.left;
+			const auto height = rect.bottom - rect.top;
+			wnd->on_resizing.fn(size{width, height});
+		}
+	}
+	return 0;
+}
+
+static
+auto wm_enter_size_move(HWND hwnd, UINT msg, WPARAM w, LPARAM l) -> LRESULT {
+	if (const auto wnd = get_window(hwnd)) {
+		wnd->user_resizing = true;
+	}
+	return 0;
+}
+
+static
+auto wm_exit_size_move(HWND hwnd, UINT msg, WPARAM w, LPARAM l) -> LRESULT {
+	if (const auto wnd = get_window(hwnd)) {
+		wnd->user_resizing = false;
+		if (wnd->on_resized.fn) {
+			RECT rect;
+			GetClientRect(hwnd, &rect);
+			const auto width  = rect.right - rect.left;
+			const auto height = rect.bottom - rect.top;
+			wnd->on_resized.fn(size{width, height});
 		}
 	}
 	return 0;
@@ -86,11 +112,13 @@ auto wm_sizing(HWND hwnd, UINT msg, WPARAM w, LPARAM l) -> LRESULT {
 static
 auto CALLBACK wndproc(HWND hwnd, UINT msg, WPARAM w, LPARAM l) -> LRESULT {
 	switch (msg) {
-		case WM_CLOSE:   { return wm_close(hwnd, msg, w, l); }
-		case WM_CREATE:  { return wm_create(hwnd, msg, w, l); }
-		case WM_DESTROY: { return wm_destroy(hwnd, msg, w, l); }
-		case WM_SIZE:    { return wm_size(hwnd, msg, w, l); }
-		case WM_SIZING:  { return wm_sizing(hwnd, msg, w, l); }
+		case WM_CLOSE:         { return wm_close(hwnd, msg, w, l); }
+		case WM_CREATE:        { return wm_create(hwnd, msg, w, l); }
+		case WM_DESTROY:       { return wm_destroy(hwnd, msg, w, l); }
+		case WM_SIZE:          { return wm_size(hwnd, msg, w, l); }
+		case WM_SIZING:        { return wm_sizing(hwnd, msg, w, l); }
+		case WM_ENTERSIZEMOVE: { return wm_enter_size_move(hwnd, msg, w, l); }
+		case WM_EXITSIZEMOVE:  { return wm_exit_size_move(hwnd, msg, w, l); }
 	}
 	return DefWindowProc(hwnd, msg, w, l);
 }
