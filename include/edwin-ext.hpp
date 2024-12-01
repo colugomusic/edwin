@@ -30,11 +30,11 @@ namespace edwin {
 
 #if defined(__APPLE__) /////////////////////////////////////////////////////
 
-#include <objc/objc.h>
+#include <Cocoa/Cocoa.h>
 
 namespace edwin {
 
-[[nodiscard]] auto get_nsview(const window& w) -> id;
+[[nodiscard]] auto get_nsview(const window& w) -> NSView*;
 
 } // edwin
 
