@@ -34,6 +34,9 @@ struct window {
 	fn::on_window_resizing on_window_resizing;
 };
 
+static fn::frame app_frame_;
+static bool app_schedule_stop_ = false;
+
 auto create(window_config cfg) -> window* {
 	auto wnd = std::make_unique<window>();
 	const auto rect = NSMakeRect(cfg.position.x, cfg.position.y, cfg.size.width, cfg.size.height);
@@ -127,15 +130,35 @@ auto set(window* wnd, fn::on_window_resizing cb) -> void {
 }
 
 auto process_messages() -> void {
-	// No-op on macOS.
+	const auto run_loop = [NSRunLoop currentRunLoop];
+	[run_loop
+		runMode:    NSDefaultRunLoopMode
+		beforeDate: [NSDate distantFuture]
+	];
 }
 
 auto app_beg(edwin::fn::frame frame, edwin::frame_interval interval) -> void {
-	// No-op on macOS.
+	app_frame_ = frame;
+	const auto run_loop = [NSRunLoop currentRunLoop];
+	auto next_frame = std::chrono::steady_clock::now();
+	for (;;) {
+		[run_loop
+			runMode:    NSDefaultRunLoopMode
+			beforeDate: [NSDate distantFuture]
+		];
+		if (frame.fn) {
+			frame.fn();
+		}
+		if (app_schedule_stop_) {
+			return;
+		}
+		next_frame += interval.value;
+		std::this_thread::sleep_until(next_frame);
+	}
 }
 
 auto app_end() -> void {
-	// No-op on macOS.
+	app_schedule_stop_ = true;
 }
 
 } // edwin
