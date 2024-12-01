@@ -83,7 +83,7 @@ struct window_config {
               // and app_end() to have edwin process the message loop for you. Unfortunately
               // it's necessary to do things this way if you want resizing to work without
               // freezing your application on Windows.
-              // This is a no-op on macOS.
+              // These are no-ops on macOS.
               auto app_beg(edwin::fn::frame frame, edwin::frame_interval interval) -> void;
               auto app_end() -> void;
 

@@ -60,6 +60,7 @@ auto get_native_handle(const window& wnd) -> native_handle {
 }
 
 auto set(window* wnd, edwin::icon icon) -> void {
+	// No-op on macOS.
 }
 
 auto set(window* wnd, edwin::position position) -> void {
@@ -119,12 +120,15 @@ auto set(window* wnd, fn::on_window_resizing cb) -> void {
 }
 
 auto process_messages() -> void {
+	// No-op on macOS.
 }
 
 auto app_beg(edwin::fn::frame frame, edwin::frame_interval interval) -> void {
+	// No-op on macOS.
 }
 
 auto app_end() -> void {
+	// No-op on macOS.
 }
 
 } // edwin
