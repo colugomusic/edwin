@@ -1,5 +1,6 @@
 #include "edwin.hpp"
 #include <Cocoa/Cocoa.h>
+#include <thread>
 
 @interface EdwinWindow : NSWindow
 @property (nonatomic, readwrite) edwin::window* wnd;
