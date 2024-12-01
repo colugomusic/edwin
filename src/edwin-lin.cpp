@@ -1,6 +1,7 @@
 #include "edwin.hpp"
 #include <chrono>
 #include <memory>
+#include <thread>
 #include <vector>
 #include <X11/Xatom.h>
 #include <X11/Xlib.h>
@@ -176,8 +177,8 @@ auto on_notify_configure(const XConfigureEvent& event) -> void {
 static
 auto on_client_message(const XEvent& event) -> void {
 	if (const auto wnd = get_window(event.xany.window)) {
-		if (wnd->on_closed) {
-			wnd->on_closed();
+		if (wnd->on_closed.fn) {
+			wnd->on_closed.fn();
 		}
 		destroy(wnd);
 	}
