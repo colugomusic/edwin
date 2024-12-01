@@ -124,9 +124,6 @@ auto set(window* wnd, edwin::resizable resizable) -> void {
 		hints.min_height = MIN_SIZE;
 		hints.max_width  = MAX_SIZE;
 		hints.max_height = MAX_SIZE;
-		hints.flags |= PResizeInc | PBaseSize;
-		hints.base_width = 1;
-		hints.base_height = 1;
 	}
 	else {
 		hints.min_width = hints.max_width = wnd->size.width;
@@ -198,6 +195,9 @@ auto app_beg(edwin::fn::frame frame, edwin::frame_interval interval) -> void {
 	auto next_frame = std::chrono::steady_clock::now();
 	for (;;) {
 		process_messages();
+		if (frame.fn) {
+			frame.fn();
+		}
 		if (app_schedule_stop_) {
 			return;
 		}
