@@ -56,6 +56,7 @@ struct window_config {
               // Windows: HWND
               // Linux: Window
               // macOS: NSView
+			  // Also look at edwin-ext.hpp for platform-specific functions.
 [[nodiscard]] auto get_native_handle(const window& wnd) -> native_handle;
 
               // Set the icon for the window.
