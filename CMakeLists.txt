@@ -17,9 +17,9 @@ target_include_directories(edwin PUBLIC
 	${CMAKE_CURRENT_LIST_DIR}/include
 )
 target_link_libraries(edwin PUBLIC
-	$<$<BOOL:${APPLE}>:-framework Cocoa>
 	$<$<BOOL:${WIN32}>:dwmapi>
 	$<$<BOOL:${LINUX}>:X11::X11>
+    "-framework Cocoa"
 )
 set_target_properties(edwin PROPERTIES
 	CXX_STANDARD 20
