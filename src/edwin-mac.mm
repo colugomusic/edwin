@@ -51,6 +51,7 @@ struct window {
 
 @implementation EdwinDelegate
 - (void)applicationDidFinishLaunching:(NSNotification *)notification {
+    [NSApp setActivationPolicy:NSApplicationActivationPolicyRegular];
 	self.timer = [NSTimer
 				  scheduledTimerWithTimeInterval: std::chrono::duration_cast<std::chrono::seconds>(self.frame_interval.value).count()
 				  target:                         self
@@ -58,7 +59,6 @@ struct window {
 				  userInfo:                       nil
 				  repeats:                        YES
 	];
-	[[NSRunLoop mainRunLoop] addTimer:self.timer forMode:NSRunLoopCommonModes];
 }
 - (void)applicationWillTerminate:(NSNotification *)notification {
 	[self.timer invalidate];
