@@ -2,6 +2,7 @@ cmake_minimum_required(VERSION 3.20)
 project(edwin)
 list (APPEND edwin_src
 	include/edwin.hpp
+	include/edwin-ext.hpp
 	include/edwin-object.hpp
 	$<$<BOOL:${APPLE}>:src/edwin-mac.mm>
 	$<$<BOOL:${LINUX}>:src/edwin-lin.cpp>
@@ -16,15 +17,10 @@ target_include_directories(edwin PUBLIC
 	${CMAKE_CURRENT_LIST_DIR}/include
 )
 target_link_libraries(edwin PUBLIC
+	$<$<BOOL:${APPLE}>:-framework Cocoa>
 	$<$<BOOL:${WIN32}>:dwmapi>
 	$<$<BOOL:${LINUX}>:X11::X11>
 )
-#if (APPLE)
-	target_link_libraries(edwin PUBLIC
-        #"-framework Foundation"
-		"-framework Cocoa"
-	)
-#endif()
 set_target_properties(edwin PROPERTIES
 	CXX_STANDARD 20
 )
