@@ -108,6 +108,10 @@ auto get_nsview(const window& wnd) -> NSView* {
 	return wnd.nsview;
 }
 
+auto get_nswindow(const window& wnd) -> NSWindow* {
+	return wnd.nswindow;
+}
+
 auto set(window* wnd, edwin::icon icon) -> void {
 	// No-op on macOS.
 }
