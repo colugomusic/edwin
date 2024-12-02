@@ -36,19 +36,22 @@ struct on_window_resized  { std::function<sig::on_window_resized> fn; };
 struct on_window_resizing { std::function<sig::on_window_resizing> fn; };
 } // fn
 
+// Any of these fields can be left defaulted.
+// Any of these fields can be changed after the window is created, using the set(...) functions.
 struct window_config {
-	edwin::fn::on_window_closed on_closed;
-	edwin::fn::on_window_resized on_resized;
-	edwin::fn::on_window_resizing on_resizing;
-	edwin::icon icon;
-	edwin::native_handle parent;
-	edwin::position position;
-	edwin::resizable resizable;
-	edwin::size size;
-	edwin::title title;
-	edwin::visible visible;
+	edwin::fn::on_window_closed on_closed;     // Function to call when the user closes the window.
+	edwin::fn::on_window_resized on_resized;   // Function to call after the user finishes resizing the window.
+	edwin::fn::on_window_resizing on_resizing; // Function to call while the user is resizing the window.
+	edwin::icon icon;                          // Icon to associate with the window, in 32-bit RGBA format.
+	edwin::native_handle parent;               // Native handle of the 'parent' window. Only relevant on Windows.
+	edwin::position position;                  // Initial position of the window.
+	edwin::resizable resizable;                // Should the user be able to resize the window?
+	edwin::size size;                          // Initial size of the window.
+	edwin::title title;                        // Title text of the window.
+	edwin::visible visible;                    // Should the window be initially visible?
 };
 
+              // If your brain is more object-oriented, check out edwin-object.hpp for an RAII wrapper.
 [[nodiscard]] auto create(window_config cfg) -> window*;
               auto destroy(window* wnd) -> void;
 
@@ -80,9 +83,12 @@ struct window_config {
               // This varies according the the stupidity of the platform.
 
               // macOS:
-              // This is the most stupid platform. You have to call app_beg() which will
-              // enter a message loop and keep going until app_end() is called. The frame
-              // callback you pass in will be called on a timer at the given interval.
+              // This is the most stupid platform. If you have an active NSApplication
+              // running then you don't have to do anything, the windows you create
+              // should just work. Otherwise you have to call app_beg() which will create
+              // an NSApplication for you, enter the message loop and keep going until
+              // app_end() is called. The frame callback you pass in will be called on
+              // a timer at the given interval.
               // process_messages() is a no-op on macOS.
 
               // Windows:
@@ -95,10 +101,12 @@ struct window_config {
 
               // Linux:
               // This is the least stupid platform. You can either run your own message loop
-              // and call process_messages() on each iteration, or use app_beg/app_end to
-              // have edwin run the loop for you.
+              // and call process_messages() on each iteration, or use app_beg()/app_end() to
+              // have edwin run the loop for you. The frame callback you pass in will be
+              // called at the given interval.
 
-              // Don't mix both process_messages and app_beg/app_end. Just do one or the other.
+              // There's never any reason to mix both process_messages() and app_beg()/app_end().
+              // Just do one or the other.
               auto process_messages() -> void;
               auto app_beg(edwin::fn::frame frame, edwin::frame_interval interval) -> void;
               auto app_end() -> void;
