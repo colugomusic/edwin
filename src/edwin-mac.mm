@@ -11,11 +11,11 @@
 namespace edwin {
 
 struct window {
-    EdwinWindow* nswindow = nullptr;
-    NSView* nsview        = nullptr;
-    fn::on_window_closed on_window_closed;
-    fn::on_window_resized on_window_resized;
-    fn::on_window_resizing on_window_resizing;
+	EdwinWindow* nswindow = nullptr;
+	NSView* nsview        = nullptr;
+	fn::on_window_closed on_window_closed;
+	fn::on_window_resized on_window_resized;
+	fn::on_window_resizing on_window_resizing;
 };
 
 } // edwin
@@ -23,17 +23,17 @@ struct window {
 @implementation EdwinWindow
 - (void) windowDidResize: (NSNotification*) notification {
 	NSRect frame = [self frame];
-    if (self.wnd->on_window_resized.fn) {
-        const auto w = (int)(frame.size.width);
-        const auto h = (int)(frame.size.height);
-        self.wnd->on_window_resized.fn({w, h});
+	if (self.wnd->on_window_resized.fn) {
+		const auto w = (int)(frame.size.width);
+		const auto h = (int)(frame.size.height);
+		self.wnd->on_window_resized.fn({w, h});
 	}
 }
 - (void) windowWillResize: (NSWindow*) sender toSize: (NSSize) frameSize {
-    if (self.wnd->on_window_resizing.fn) {
-        const auto w = (int)(frameSize.width);
-        const auto h = (int)(frameSize.height);
-        self.wnd->on_window_resizing.fn({w, h});
+	if (self.wnd->on_window_resizing.fn) {
+		const auto w = (int)(frameSize.width);
+		const auto h = (int)(frameSize.height);
+		self.wnd->on_window_resizing.fn({w, h});
 	}
 }
 - (void) windowWillClose: (NSNotification*) notification {
@@ -51,22 +51,22 @@ struct window {
 
 @implementation EdwinDelegate
 - (void)applicationDidFinishLaunching:(NSNotification *)notification {
-    self.timer = [NSTimer
-                  scheduledTimerWithTimeInterval: std::chrono::duration_cast<std::chrono::seconds>(self.frame_interval.value).count()
-                  target:                         self
-                  selector:                       @selector(run_frame)
-                  userInfo:                       nil
-                  repeats:                        YES
-    ];
-    [[NSRunLoop mainRunLoop] addTimer:self.timer forMode:NSRunLoopCommonModes];
+	self.timer = [NSTimer
+				  scheduledTimerWithTimeInterval: std::chrono::duration_cast<std::chrono::seconds>(self.frame_interval.value).count()
+				  target:                         self
+				  selector:                       @selector(run_frame)
+				  userInfo:                       nil
+				  repeats:                        YES
+	];
+	[[NSRunLoop mainRunLoop] addTimer:self.timer forMode:NSRunLoopCommonModes];
 }
 - (void)applicationWillTerminate:(NSNotification *)notification {
-    [self.timer invalidate];
+	[self.timer invalidate];
 }
 - (void)run_frame {
-    if (self.frame.fn) {
-        self.frame.fn();
-    }
+	if (self.frame.fn) {
+		self.frame.fn();
+	}
 }
 @end
 
@@ -105,7 +105,7 @@ auto get_native_handle(const window& wnd) -> native_handle {
 }
 
 auto get_nsview(const window& wnd) -> NSView* {
-    return wnd.nsview;
+	return wnd.nsview;
 }
 
 auto set(window* wnd, edwin::icon icon) -> void {
@@ -121,10 +121,10 @@ auto set(window* wnd, edwin::position position) -> void {
 
 auto set(window* wnd, edwin::position position, edwin::size size) -> void {
 	auto frame = [wnd->nswindow frame];
-    frame.origin.x = position.x;
-    frame.origin.y = position.y;
-    frame.size.width = size.width;
-    frame.size.height = size.height;
+	frame.origin.x = position.x;
+	frame.origin.y = position.y;
+	frame.size.width = size.width;
+	frame.size.height = size.height;
 	[wnd->nswindow setFrame: frame display: YES];
 }
 
@@ -139,10 +139,10 @@ auto set(window* wnd, edwin::resizable resizable) -> void {
 
 auto set(window* wnd, edwin::size size) -> void {
 	auto frame = [wnd->nswindow frame];
-    frame.origin.y += frame.size.height;
-    frame.origin.y -= size.height;
-    frame.size.width = size.width;
-    frame.size.height = size.height;
+	frame.origin.y += frame.size.height;
+	frame.origin.y -= size.height;
+	frame.size.width = size.width;
+	frame.size.height = size.height;
 	[wnd->nswindow setFrame: frame display: YES];
 }
 
@@ -171,22 +171,22 @@ auto set(window* wnd, fn::on_window_resizing cb) -> void {
 }
 
 auto process_messages() -> void {
-    // No-op on macOS.
+	// No-op on macOS.
 }
 
 auto app_beg(edwin::fn::frame frame, edwin::frame_interval interval) -> void {
-    @autoreleasepool {
-        const auto app = [NSApplication sharedApplication];
-        const auto delegate = [[EdwinDelegate alloc] init];
-        delegate.frame = frame;
-        delegate.frame_interval = interval;
-        app.delegate = delegate;
-        [app run];
-    }
+	@autoreleasepool {
+		const auto app = [NSApplication sharedApplication];
+		const auto delegate = [[EdwinDelegate alloc] init];
+		delegate.frame = frame;
+		delegate.frame_interval = interval;
+		app.delegate = delegate;
+		[app run];
+	}
 }
 
 auto app_end() -> void {
-    [[NSApplication sharedApplication] terminate:nil];
+	[[NSApplication sharedApplication] terminate:nil];
 }
 
 } // edwin
