@@ -19,7 +19,7 @@ target_include_directories(edwin PUBLIC
 target_link_libraries(edwin PUBLIC
 	$<$<BOOL:${WIN32}>:dwmapi>
 	$<$<BOOL:${LINUX}>:X11::X11>
-    "-framework Cocoa"
+	"-framework Cocoa"
 )
 set_target_properties(edwin PROPERTIES
 	CXX_STANDARD 20
