@@ -1,4 +1,4 @@
-This is C++ library for opening a window on Windows, macOS or Linux. It's intended for situations where you just need to be able to open a window and then pass the native window handle on to something which wants to "attach" to it in some way (in my case it is audio plugins.) I tried to make the code as simple as possible and easy to fork and modify for your use case.
+This is C++ library for opening a window on Windows, macOS or Linux. It's intended for situations where you just need to be able to open a window and then pass the native window handle on to something which wants to "attach" to it in some way (in my case it is audio plugin editor GUIs.) I tried to make the code as simple as possible and easy to fork and modify for your use case.
 
 APIs used:
 - Windows: Win32
