@@ -52,7 +52,7 @@ struct window_config {
 [[nodiscard]] auto create(window_config cfg) -> window*;
               auto destroy(window* wnd) -> void;
 
-			  // Return the native handle for the window.
+              // Return the native handle for the window.
               // Windows: HWND
               // Linux: Window
               // macOS: NSView
@@ -75,15 +75,30 @@ struct window_config {
               auto set(window* wnd, fn::on_window_resized cb) -> void;
               auto set(window* wnd, fn::on_window_resizing cb) -> void;
 
-              // Call this in a loop.
-              // This is a no-op on macOS.
-              auto process_messages() -> void;
+              // How to process window messages.
+              // This varies according the the stupidity of the platform.
 
-              // Instead of calling process_messages() in your own loop, you can use app_beg()
-              // and app_end() to have edwin process the message loop for you. Unfortunately
-              // it's necessary to do things this way if you want resizing to work without
-              // freezing your application on Windows.
-              // These are no-ops on macOS.
+              // macOS:
+              // This is the most stupid platform. You have to call app_beg() which will
+              // enter a message loop and keep going until app_end() is called. The frame
+              // callback you pass in will be called on a timer at the given interval.
+              // process_messages() is a no-op on macOS.
+
+              // Windows:
+              // This is the second most stupid platform. You can run your own message loop
+              // and call process_messages() on each iteration to process window messages.
+              // However this will cause your entire application to freeze while the window
+              // is being resized, so to avoid this you can instead call app_beg() to have
+              // edwin run a message loop for you and app_end() to stop it. The frame
+              // callback you pass in will be called on a timer at the given interval.
+
+              // Linux:
+              // This is the least stupid platform. You can either run your own message loop
+              // and call process_messages() on each iteration, or use app_beg/app_end to
+              // have edwin run the loop for you.
+
+              // Don't mix both process_messages and app_beg/app_end. Just do one or the other.
+              auto process_messages() -> void;
               auto app_beg(edwin::fn::frame frame, edwin::frame_interval interval) -> void;
               auto app_end() -> void;
 
