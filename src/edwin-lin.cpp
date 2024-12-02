@@ -78,6 +78,8 @@ auto destroy(window* wnd) -> void {
 	if (!wnd->xwindow) { return; }
 	const auto xdisplay = get_xdisplay();
 	if (!xdisplay) { return; }
+	auto match = [wnd](const entry& e) { return e.wnd == wnd; };
+	window_list_.erase(std::remove_if(window_list_.begin(), window_list_.end(), match), window_list_.end());
 	XDestroyWindow(xdisplay, wnd->xwindow);
 	delete wnd;
 }
@@ -197,6 +199,7 @@ auto process_messages() -> void {
 
 auto app_beg(edwin::fn::frame frame, edwin::frame_interval interval) -> void {
 	app_frame_ = frame;
+	app_schedule_stop_ = false;
 	auto next_frame = std::chrono::steady_clock::now();
 	for (;;) {
 		process_messages();
