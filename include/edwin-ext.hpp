@@ -35,6 +35,7 @@ namespace edwin {
 namespace edwin {
 
 [[nodiscard]] auto get_nsview(const window& w) -> NSView*;
+[[nodiscard]] auto get_nswindow(const window& w) -> NSWindow*;
 
 } // edwin
 
