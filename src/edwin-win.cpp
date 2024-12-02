@@ -318,6 +318,7 @@ auto process_messages() -> void {
 }
 
 auto app_beg(edwin::fn::frame frame, edwin::frame_interval interval) -> void {
+	app_schedule_stop_ = false;
 	app_frame_ = frame;
 	app_timer_ = SetTimer(nullptr, 1, interval.value.count(), app_timer_proc);
 	auto msg = MSG{};
@@ -332,6 +333,10 @@ auto app_beg(edwin::fn::frame frame, edwin::frame_interval interval) -> void {
 
 auto app_end() -> void {
 	app_schedule_stop_ = true;
+	if (app_timer_) {
+		KillTimer(nullptr, app_timer_);
+		app_timer_ = 0;
+	}
 }
 
 } // edwin
