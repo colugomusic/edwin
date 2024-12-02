@@ -5,6 +5,9 @@ APIs used:
 - macOS: Cocoa
 - Linux: Xlib
 
+# Usage
+Add it as a cmake subproject and link to `edwin::edwin`. Then `#include <edwin.hpp>` in your code. There is some documentation [in there](https://github.com/colugomusic/edwin/blob/master/include/edwin.hpp).
+
 # Alternative libraries that I didn't like
 
 I tried several existing libraries and had problems with all of them, but if edwin isn't ideal for your use case then maybe one of these is:
