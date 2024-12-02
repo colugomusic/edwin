@@ -1,5 +1,7 @@
 #include "edwin.hpp"
+#include <algorithm>
 #include <Cocoa/Cocoa.h>
+#include <memory>
 #include <thread>
 
 @interface EdwinWindow : NSWindow
@@ -21,14 +23,14 @@ struct window {
 @implementation EdwinWindow
 - (void) windowDidResize: (NSNotification*) notification {
 	NSRect frame = [self frame];
-	if (self.wnd->on_window_resized.fn) {
+    if (self.wnd->on_window_resized.fn) {
         const auto w = (int)(frame.size.width);
         const auto h = (int)(frame.size.height);
         self.wnd->on_window_resized.fn({w, h});
 	}
 }
 - (void) windowWillResize: (NSWindow*) sender toSize: (NSSize) frameSize {
-	if (self.wnd->on_window_resizing.fn) {
+    if (self.wnd->on_window_resizing.fn) {
         const auto w = (int)(frameSize.width);
         const auto h = (int)(frameSize.height);
         self.wnd->on_window_resizing.fn({w, h});
@@ -41,22 +43,36 @@ struct window {
 }
 @end
 
+@interface EdwinDelegate : NSObject <NSApplicationDelegate>
+@property (strong) NSTimer *timer;
+@property (nonatomic) edwin::fn::frame frame;
+@property (nonatomic) edwin::frame_interval frame_interval;
+@end
+
+@implementation EdwinDelegate
+- (void)applicationDidFinishLaunching:(NSNotification *)notification {
+    self.timer = [NSTimer
+                  scheduledTimerWithTimeInterval: std::chrono::duration_cast<std::chrono::seconds>(self.frame_interval.value).count()
+                  target:                         self
+                  selector:                       @selector(run_frame)
+                  userInfo:                       nil
+                  repeats:                        YES
+    ];
+    [[NSRunLoop mainRunLoop] addTimer:self.timer forMode:NSRunLoopCommonModes];
+}
+- (void)applicationWillTerminate:(NSNotification *)notification {
+    [self.timer invalidate];
+}
+- (void)run_frame {
+    if (self.frame.fn) {
+        self.frame.fn();
+    }
+}
+@end
+
 namespace edwin {
 
-static fn::frame app_frame_;
-static bool app_schedule_stop_ = false;
-static NSApplication* app_ = nullptr;
-
-static
-auto get_app() -> NSApplication* {
-	if (!app_) {
-		app_ = [NSApplication sharedApplication];
-	}
-	return app_;
-}
-
 auto create(window_config cfg) -> window* {
-	get_app();
 	auto wnd = std::make_unique<window>();
 	const auto rect = NSMakeRect(cfg.position.x, cfg.position.y, cfg.size.width, cfg.size.height);
 	wnd->nswindow = [[EdwinWindow alloc]
@@ -105,10 +121,10 @@ auto set(window* wnd, edwin::position position) -> void {
 
 auto set(window* wnd, edwin::position position, edwin::size size) -> void {
 	auto frame = [wnd->nswindow frame];
-	frame.origin.x = position.x;
-	frame.origin.y = position.y;
-	frame.size.width = size.width;
-	frame.size.height = size.height;
+    frame.origin.x = position.x;
+    frame.origin.y = position.y;
+    frame.size.width = size.width;
+    frame.size.height = size.height;
 	[wnd->nswindow setFrame: frame display: YES];
 }
 
@@ -123,8 +139,10 @@ auto set(window* wnd, edwin::resizable resizable) -> void {
 
 auto set(window* wnd, edwin::size size) -> void {
 	auto frame = [wnd->nswindow frame];
-	frame.size.width = size.width;
-	frame.size.height = size.height;
+    frame.origin.y += frame.size.height;
+    frame.origin.y -= size.height;
+    frame.size.width = size.width;
+    frame.size.height = size.height;
 	[wnd->nswindow setFrame: frame display: YES];
 }
 
@@ -153,29 +171,22 @@ auto set(window* wnd, fn::on_window_resizing cb) -> void {
 }
 
 auto process_messages() -> void {
-	const auto app = get_app();
-	[app updateWindows];
+    // No-op on macOS.
 }
 
 auto app_beg(edwin::fn::frame frame, edwin::frame_interval interval) -> void {
-	const auto app = get_app();
-	app_frame_ = frame;
-	auto next_frame = std::chrono::steady_clock::now();
-	for (;;) {
-		[app updateWindows];
-		if (frame.fn) {
-			frame.fn();
-		}
-		if (app_schedule_stop_) {
-			return;
-		}
-		next_frame += interval.value;
-		std::this_thread::sleep_until(next_frame);
-	}
+    @autoreleasepool {
+        const auto app = [NSApplication sharedApplication];
+        const auto delegate = [[EdwinDelegate alloc] init];
+        delegate.frame = frame;
+        delegate.frame_interval = interval;
+        app.delegate = delegate;
+        [app run];
+    }
 }
 
 auto app_end() -> void {
-	app_schedule_stop_ = true;
+    [[NSApplication sharedApplication] terminate:nil];
 }
 
 } // edwin
