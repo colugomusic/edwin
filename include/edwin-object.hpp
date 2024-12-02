@@ -30,6 +30,9 @@ struct object {
 		}
 		return *this;
 	}
+	[[nodiscard]] auto get() const noexcept -> window* {
+		return wnd_;
+	}
 private:
 	window* wnd_ = nullptr;
 };
