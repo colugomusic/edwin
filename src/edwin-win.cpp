@@ -194,6 +194,9 @@ auto make_hicon_color(edwin::icon icon) -> HBITMAP {
 
 static
 auto make_hicon(edwin::icon icon) -> HICON {
+	if (icon.size.width <= 0 || icon.size.height <= 0) {
+		return nullptr;
+	}
 	ICONINFO iconinfo;
 	iconinfo.fIcon    = TRUE;
 	iconinfo.hbmMask  = make_hicon_mask(icon.size);
@@ -252,9 +255,6 @@ auto get_hwnd(const window& wnd) -> HWND {
 auto set(window* wnd, edwin::icon icon) -> void {
 	auto old_icon = wnd->hicon;
 	wnd->hicon = make_hicon(icon);
-	if (!wnd->hicon) {
-		return;
-	}
 	SendMessage(wnd->hwnd, WM_SETICON, ICON_BIG, (LPARAM)(wnd->hicon));
 	SendMessage(wnd->hwnd, WM_SETICON, ICON_SMALL, (LPARAM)(wnd->hicon));
 	if (old_icon) {
