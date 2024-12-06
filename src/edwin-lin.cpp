@@ -95,6 +95,9 @@ auto get_xwindow(const window& w) -> Window {
 auto set(window* wnd, edwin::icon icon) -> void {
 	// I don't know if this code works because my window
 	// manager doesn't actually have window icons.
+	if (icon.size.width <= 0 || icon.size.height <= 0) {
+		return;
+	}
 	std::vector<unsigned long> icon_data;
 	icon_data.resize(2 + (icon.size.width * icon.size.height));
 	icon_data[0] = icon.size.width;
