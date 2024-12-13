@@ -19,8 +19,12 @@ target_include_directories(edwin PUBLIC
 target_link_libraries(edwin PUBLIC
 	$<$<BOOL:${WIN32}>:dwmapi>
 	$<$<BOOL:${LINUX}>:X11::X11>
-	"-framework Cocoa"
 )
+if (APPLE)
+	target_link_libraries(edwin PUBLIC
+		"-framework Cocoa"
+	)
+endif()
 set_target_properties(edwin PROPERTIES
 	CXX_STANDARD 20
 )
