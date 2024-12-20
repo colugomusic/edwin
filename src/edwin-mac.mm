@@ -155,11 +155,13 @@ auto set(window* wnd, edwin::title title) -> void {
 }
 
 auto set(window* wnd, edwin::visible visible) -> void {
-	if (visible.value) {
-		[wnd->nswindow makeKeyAndOrderFront: nil];
-	} else {
-		[wnd->nswindow orderOut: nil];
-	}
+    if (wnd && wnd->nswindow) {
+        if (visible.value) {
+            [wnd->nswindow makeKeyAndOrderFront: nil];
+        } else {
+            [wnd->nswindow orderOut: nil];
+        }
+    }
 }
 
 auto set(window* wnd, fn::on_window_closed cb) -> void {
