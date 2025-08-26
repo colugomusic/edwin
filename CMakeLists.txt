@@ -1,5 +1,8 @@
 cmake_minimum_required(VERSION 3.20)
 project(edwin)
+if (UNIX AND NOT APPLE)
+	set(LINUX TRUE)
+endif()
 add_library(edwin STATIC ${edwin_src})
 add_library(edwin::edwin ALIAS edwin)
 target_sources(edwin PRIVATE
