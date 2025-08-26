@@ -1,3 +1,6 @@
 @PACKAGE_INIT@
 
+include(CMakeFindDependencyMacro)
+find_dependency(X11)
+
 include("${CMAKE_CURRENT_LIST_DIR}/edwin-targets.cmake")
